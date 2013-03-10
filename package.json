@@ -27,8 +27,5 @@
   "devDependencies": {
     "tap": "~0.4.0"
   },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "license": "MIT"
 }
