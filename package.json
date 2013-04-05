@@ -9,19 +9,19 @@
   ],
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/hendrikcech/tent-auth.git"
   },
   "author": {
     "name": "Hendrik Cech",
     "email": "hendrik.cech@gmail.com"
   },
-  "version": "0.0.0",
+  "version": "0.1.0",
   "main": "auth.js",
   "scripts": {
     "test": "tap ./test"
   },
   "dependencies": {
-    "tent-request": "~0.0.0"
+    "tent-request": "~0.1.0"
   },
   "devDependencies": {
     "tap": "~0.4.1"
