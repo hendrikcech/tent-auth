@@ -45,7 +45,7 @@ auth.generateUrl(server, app, function(err, url, appKeys, state) {
 auth.tradeCode(server, appKeys, code, function(err, token) {
     if(err) return console.log(err)
     console.log(token)
-}
+})
 ```
 
 - `server` (string): Tent server of the entity, found in the [core profile](https://tent.io/docs/info-types#core)
