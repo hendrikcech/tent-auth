@@ -21,10 +21,16 @@
     "test": "tap ./test"
   },
   "dependencies": {
-    "tent-request": "~0.1.0"
+    "tent-request": "~0.1.0",
+    "hyperquest": "~0.1.6",
+    "concat": "~0.2.4",
+    "hawk": "~0.15.0"
   },
   "devDependencies": {
     "tap": "~0.4.1"
+  },
+  "browser": {
+    "hawk": "./node_modules/hawk/lib/browser.js"
   },
   "license": "MIT"
 }
