@@ -1,61 +1,38 @@
 # tent-auth
-A node.js helper for the [Tent](https://tent.io) app authentication process.
-
-With release of version 0.3 of the Tent protocol, this module will need a major rework. Therefore I stopped working on it until a reference server implementation is available.
-
-So be warned. You can play around with this, but the API will likely change in the near future, I'm not even happy with it in the current state.
-
-Nevertheless it works at the moment (even if the tests say different).
+A node.js helper for the [Tent](https://tent.io) app authentication process. Thanks to [browserify](https://github.com/substack/node-browserify) this module can also be used in the browser!
+More information can be found in the corresponding [docs](https://tent.io/docs/apps).
 
 ## install
 With npm:
-```
-npm install tent-auth
-```
 
-## example
-An example of the whole auth flow can be found in the `example` folder.
+    npm install tent-auth
+
+# usage
+Working examples can be found in the [example](example) folder. To understand how to utilize this module you should really look at these.
+The [simple one](example/cmdline.js) just goes one time through the auth flow, the [more complex one](example/server.js) spins up a server and remembers entities to support "logins" and is extensively commented.
 
 ## methods
 
-```
-var auth = require('tent-auth')
-```
+    var auth = require('tent-auth')
 
-### auth.generateUrl(server, app, callback)
+### auth.registerApp(meta, app, function callback(err, tempCreds, appID) {})
+If the entity didn't authorize the app previously, this is the first function to call. Else this step should be skipped ([server example](example/server.js)).
+It takes the content part of the meta post (`meta.post.content`), the app post to create (following [this schema](https://tent.io/docs/post-types#app)) and a callback.
+After completion, the callback gets passed temporary credentials, which have to be used during the authorization process and the id of the created app post.
 
-```
-auth.generateUrl(server, app, function(err, url, appKeys, state) {
-    if(err) return console.log(err)
-    console.log(appKeys)
-})
-```
+### auth.generateURL(meta, appID)
+This function generates a URL to which the user has to be directed.
+It requires the same meta object as `auth.registerApp()` and takes the id of the created app post.
+The return is an object, containing `state` and `url` keys. The state should be persisted, to be able to compare it later.
 
-- `server` (string): Tent server of the entity, found in the [core profile](https://tent.io/docs/info-types#core)
-- `app` (object): app profile ([lookie lookie](https://tent.io/docs/app-auth#app-registration))
-- `callback` (function):
-    - `err`: an error object if something bad happend or `null` if not
-    - `url` (string): url to redirect the user to
-    - `appKeys` (object): mac keys to use during the authentication process (for example for `auth.tradeCode`)
-    - `state` (string): the random string appended to the `url`. Verify to prevent cross-side request forgery attacks
+### auth.tradeCode(meta, tempCreds, code, function callback(err, permaCreds) {})
+When the server finally redirects the user to the specified redirect uri, this function can be used to trade the code for permanent tokens.
+Use the `tempCreds` obtained from `auth.registerApp()`.
 
-### auth.tradeCode(server, appKeys, code, callback)
+# test
+Tests are currently broken and are in need of a major rework.
 
-```
-auth.tradeCode(server, appKeys, code, function(err, token) {
-    if(err) return console.log(err)
-    console.log(token)
-})
-```
-
-- `server` (string): Tent server of the entity, found in the [core profile](https://tent.io/docs/info-types#core)
-- `appKeys` (object): mac keys to use during the authentication process (for example from `auth.generateUrl`)
-- `code` (string): code got back from the server after the user permitted the app
-- `callback` (function):
-    - `err`: an error object if something bad happend or `null` if not
-    - `token`: the final auth keys
-
-## license
+# license
 This software is released under the MIT license:
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of

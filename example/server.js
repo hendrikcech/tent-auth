@@ -13,7 +13,11 @@ var server = require('express')()
 var app = {
 	name: 'Äpp',
 	url: 'http://aepp.com',
-	redirect_uri: 'http://localhost:'+ port +'/auth/callback/'
+	redirect_uri: 'http://localhost:'+ port +'/auth/callback/',
+	types: {
+		read: [ 'https://tent.io/types/status/v0' ],
+		write: [ 'https://tent.io/types/status/v0' ]
+	}
 }
 
 // we need a place to persist some data between the redirect and the callback

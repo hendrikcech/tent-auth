@@ -18,7 +18,11 @@ var rl = readline.createInterface({
 var app = { 
 	name: 'tent-auth Test App',
 	url: 'http://testtestappapp.com',
-	redirect_uri: 'http://aeppdadaepp.net/redirect'
+	redirect_uri: 'http://aeppdadaepp.net/redirect',
+	types: {
+		read: [ 'https://tent.io/types/status/v0' ],
+		write: [ 'https://tent.io/types/status/v0' ]
+	}
 }
 
 var metaStore = {}
