@@ -15,13 +15,13 @@
     "name": "Hendrik Cech",
     "email": "hendrik.cech@gmail.com"
   },
-  "version": "0.2.2",
+  "version": "0.2.3",
   "main": "auth.js",
   "scripts": {
     "test": "tap ./test"
   },
   "dependencies": {
-    "tent-request": "~0.1.0",
+    "tent-request": "~0.2.0",
     "hyperquest": "~0.1.6",
     "concat-stream": "~0.1.1",
     "hawk": "~0.15.0"
