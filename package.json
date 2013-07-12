@@ -1,6 +1,6 @@
 {
   "name": "tent-auth",
-  "description": "Module for authenticate apps with Tent servers",
+  "description": "Tent app auth flow implementation.",
   "keywords": [
     "tent",
     "auth",
@@ -23,7 +23,7 @@
   "dependencies": {
     "tent-request": "~0.1.0",
     "hyperquest": "~0.1.6",
-    "concat": "~0.2.4",
+    "concat-stream": "~0.1.11",
     "hawk": "~0.15.0"
   },
   "devDependencies": {
