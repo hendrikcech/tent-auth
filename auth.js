@@ -110,13 +110,15 @@ exports.tradeCode = function(meta, creds, code, callback) {
 
 	var req = hyperquest.post(url, { headers: header })
 
+	var statusErr = false;
 	req.on('response', function(res) {
 		if(res.statusCode !== 200)
-			return callback(new Error('bad status code:'+res.statusCode))
+			statusErr = new Error('bad status code:'+res.statusCode)
 	})
 
 	req.pipe(concat(function(err, data) {
 		if(err) return callback(err)
+		if(statusErr) return callback(statusErr)
 
 		try {
 			data = JSON.parse(data)
