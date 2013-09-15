@@ -15,7 +15,7 @@
     "name": "Hendrik Cech",
     "email": "hendrik.cech@gmail.com"
   },
-  "version": "0.2.3",
+  "version": "0.2.4",
   "main": "auth.js",
   "scripts": {
     "test": "tap ./test"
