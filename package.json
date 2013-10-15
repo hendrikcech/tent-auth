@@ -21,7 +21,7 @@
     "test": "tap ./test"
   },
   "dependencies": {
-    "tent-request": "~0.2.0",
+    "tent-request": "~0.3.1",
     "hyperquest": "~0.1.6",
     "concat-stream": "~0.1.1",
     "hawk": "~0.15.0"
