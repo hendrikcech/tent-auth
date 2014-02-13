@@ -21,13 +21,13 @@
     "test": "tap ./test"
   },
   "dependencies": {
-    "tent-request": "~0.3.1",
-    "hyperquest": "~0.1.6",
-    "concat-stream": "~0.1.1",
-    "hawk": "~0.15.0"
+    "tent-request": "~0.4.3",
+    "concat-stream": "~1.4.1",
+    "hawk": "~2.1.0",
+    "debug": "~0.7.4"
   },
   "devDependencies": {
-    "tap": "~0.4.1"
+    "tap": "~0.4.8"
   },
   "browser": {
     "hawk": "./node_modules/hawk/lib/browser.js"

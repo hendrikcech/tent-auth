@@ -1,30 +1,43 @@
 var request = require('tent-request')
-var hyperquest = require('hyperquest')
+var http = require('http')
+var https = require('https')
 var concat = require('concat-stream')
 var hawk = require('hawk')
 var urlMod = require('url')
+var debug = require('debug')('tent-auth')
 
 /* registers app and builds an url where the user can authorize the app */
-exports.registerApp = function(meta, app, callback) {
-	if(!meta) throw new Error('meta post required (the post.content part)')
-	if(!app) throw new Error('app post content required')
+exports.registerApp = function(meta, app, cb) {
+	if(!meta) {
+		throw new Error('meta post required (the post.content part)')
+	}
+	if(!app) {
+		throw new Error('app post content required')
+	}
 	if(!(app.name && app.url && app.redirect_uri)) {
-		throw new Error('missing required app infos'
-			+ '(more information: https://tent.io/docs/post-types#app)')}
+		var err = 'missing required app infos'
+			+ '(more information: https://tent.io/docs/post-types#app)'
+		throw new Error(err)
+	}
 
-	var client = request.createClient(meta)
-	client.create('https://tent.io/types/app/v0#', parseLinkHeader)
-		.content(app)
-		.permissions(false)
+	debug('create app post')
+
+	var client = request(meta)
+	client.create('https://tent.io/types/app/v0#', {permissions: false}, app,
+		parseLinkHeader)
 
 	function parseLinkHeader(err, res, body) {
-		if(err) return callback(err)
+		if(err) return cb(err)
 
 		var links = res.headers.link
-		if(!links) return callback(
-			new Error('flawed response: no credential link header (1)'))
+		if(!links) {
+			err = 'flawed response: no credential link header (1)'
+			return cb(new Error(err))
+		}
 
 		links = links.split(',') //split, if there are multiple urls
+
+		debug('link header:', links)
 
 		var found = false
 		links.forEach(function(link) {
@@ -35,29 +48,51 @@ exports.registerApp = function(meta, app, callback) {
 				return followCredURL(url[1], body.post.id)
 			}
 		})
-		if(!found) return callback(
-			new Error('flawed response: no credential link header (2)'))
+
+		if(!found) {
+			err = 'flawed response: no credential link header (2)'
+			return cb(new Error(err))
+		}
 	}
 
 	function followCredURL(url, appID) {
-		var req = hyperquest(addPort(url),
-			{ headers: { 'Accept': 'application/vnd.tent.post.v0+json'}})
+		debug('follow', url)
 
-		var statusErr = false
-		req.on('response', function(res) {
-			if(res.statusCode !== 200)
-				statusErr = new Error('error following link header: '
-					+res.statusCode)
+		var u = urlMod.parse(url)
+		var iface = u.protocol === 'https:' ? https : http
+		u.headers = { 'Accept': 'application/vnd.tent.post.v0+json'}
+
+		debug('request with', u)
+
+		var req = iface.get(u)
+
+		var error = []
+		req.on('error', function(err) {
+			error.push(err)
 		})
 
-		req.pipe(concat(function(err, data) {
-			if(err) return callback(err)
-			if(statusErr) return callback(statusErr)
+		req.on('response', function(res) {
+			if(res.statusCode !== 200) {
+				var err = res.statusCode+' '+http.STATUS_CODES[res.statusCode]
+				error.push(err)
+			}
+
+			res.pipe(concat({ encoding: 'string' }, onCreds))
+		})
+
+		function onCreds(body) {
+			if(err) error.push(err)
 
 			try {
-				data = JSON.parse(data)
-			} catch(e) {
-				return callback(e)
+				var data = JSON.parse(body)
+			} catch(e) {}
+
+			if(data && data.error) {
+				error.push(data.error)
+			}
+
+			if(error.length > 0) {
+				return cb(new Error(error.join()))
 			}
 
 			var creds = {
@@ -66,10 +101,11 @@ exports.registerApp = function(meta, app, callback) {
 				algorithm: data.post.content.hawk_algorithm
 			}
 
-			callback(null, creds, appID)
-		}))
+			cb(null, creds, appID)
+		}
 	}
 }
+
 
 exports.generateURL = function(meta, appID) {
 	//create nonce
@@ -77,7 +113,8 @@ exports.generateURL = function(meta, appID) {
 	var chars =
 		"0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz"
 	var state = ''
-	for (var i=0; i<11; i++) {
+
+	for (var i = 0; i < 11; i++) {
 		var rnum = Math.floor(Math.random() * chars.length)
 		state += chars.substring(rnum,rnum+1)
 	}
@@ -91,66 +128,70 @@ exports.generateURL = function(meta, appID) {
 	}
 }
 
-/* last authentication step; 'trades' received code for a persistive token */
-exports.tradeCode = function(meta, creds, code, callback) {
-	if(!meta) throw new Error('meta post required (the post.content part)')
-	if(!creds || !creds.id || !creds.key || !creds.algorithm)
-		throw new Error(
-			'temporary credentials required (object with id, key and algorithm')
-	if(!code) throw new Error('code required (read the function name!)')
+/* last authentication step; 'trades' received code for a persitent token */
+exports.tradeCode = function(meta, creds, code, cb) {
+	if(!meta) {
+		throw new Error('meta post required (the post.content part)')
+	}
+	if(!creds || !creds.id || !creds.key || !creds.algorithm) {
+		var err = 'temporary credentials required (object with id, key and algorithm keys'
+		throw new Error(err)
+	}
+	if(!code)  {
+		throw new Error('code required (read the function name!)')
+	}
 
-	var url = addPort(meta.servers[0].urls.oauth_token)
+	var url = meta.servers[0].urls.oauth_token
+
+	var u = urlMod.parse(url)
+	var iface = u.protocol === 'https:' ? https : http
 
 	var auth = hawk.client.header(url, 'POST', { credentials: creds })
-	var header = {
+	u.headers = {
 		'Accept': 'application/json',
 		'Content-Type': 'application/json',
 		'Authorization': auth.field
 	}
+	u.method = 'POST'
 
-	var req = hyperquest.post(url, { headers: header })
+	debug('trade code request', u)
 
-	var statusErr = false;
-	req.on('response', function(res) {
-		if(res.statusCode !== 200)
-			statusErr = new Error('bad status code:'+res.statusCode)
+	var req = iface.request(u)
+
+	var error = []
+	req.on('error', function(err) {
+		error.push(err)
 	})
 
-	req.pipe(concat(function(err, data) {
-		if(err) return callback(err)
-		if(statusErr) return callback(statusErr)
-
-		try {
-			data = JSON.parse(data)
-		} catch(e) {
-			return callback(e)
+	req.on('response', function(res) {
+		if(res.statusCode !== 200) {
+			var err = res.statusCode+' '+http.STATUS_CODES[res.statusCode]
+			error.push(err)
 		}
 
-		callback(null, data)
-	}))
+		res.pipe(concat({ encoding: 'string' }, onCreds))
+	})
 
-	req.write(JSON.stringify({
+	function onCreds(body) {
+		if(err) error.push(err)
+
+		try {
+			var data = JSON.parse(body)
+		} catch(e) {}
+
+		if(data && data.error) {
+			error.push(data.error)
+		}
+
+		if(error.length > 0) {
+			return cb(new Error(error.join()))
+		}
+
+		cb(null, data)
+	}
+
+	req.end(JSON.stringify({
 		code: code,
 		token_type: 'https://tent.io/oauth/hawk-token'
 	}))
-	req.end()
-	//console.log(req.request)
-}
-
-function addPort(url) {
-	// non-browserified version or on standard port (80 or 443?) -> just return
-	if(typeof window === 'undefined' || !window.location.port)
-		return url
-
-	var parsed = urlMod.parse(url)
-	var port = null
-	if(!parsed.port) {
-		if(parsed.protocol === 'http:') port = 80
-		else if(parsed.protocol === 'https:') port = 443
-	}
-	if(port) {
-		parsed.port = port
-		parsed.host += ':' + port //why node, why?
-	}
-	return urlMod.format(parsed)
 }
