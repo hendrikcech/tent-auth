@@ -6,8 +6,14 @@ var hawk = require('hawk')
 var urlMod = require('url')
 var debug = require('debug')('tent-auth')
 
+module.exports = {
+	registerApp: registerApp,
+	generateURL: generateURL,
+	tradeCode: tradeCode
+}
+
 /* registers app and builds an url where the user can authorize the app */
-exports.registerApp = function(meta, app, cb) {
+function registerApp(meta, app, cb) {
 	if(!meta) {
 		throw new Error('meta post required (the post.content part)')
 	}
@@ -55,12 +61,15 @@ exports.registerApp = function(meta, app, cb) {
 		}
 	}
 
-	function followCredURL(url, appID) {
+	function followCredURL(url, appId) {
 		debug('follow', url)
 
 		var u = urlMod.parse(url)
 		var iface = u.protocol === 'https:' ? https : http
 		u.headers = { 'Accept': 'application/vnd.tent.post.v0+json'}
+
+		// only relevant for browserified version
+		u.withCredentials = false
 
 		debug('request with', u)
 
@@ -101,13 +110,22 @@ exports.registerApp = function(meta, app, cb) {
 				algorithm: data.post.content.hawk_algorithm
 			}
 
-			cb(null, creds, appID)
+			cb(null, creds, appId)
 		}
 	}
 }
 
 
-exports.generateURL = function(meta, appID) {
+function generateURL(meta, appId) {
+	if(!meta) {
+		throw new Error('meta post required')
+	}
+	if(!appId) {
+		throw new Error('appId required')
+	}
+
+	meta = normalizeMataPost(meta)
+
 	//create nonce
 	//http://www.mediacollege.com/internet/javascript/number/random.html
 	var chars =
@@ -120,7 +138,7 @@ exports.generateURL = function(meta, appID) {
 	}
 
 	var oauth_url = meta.servers[0].urls.oauth_auth
-	var url = oauth_url + '?client_id=' + appID + '&state=' + state
+	var url = oauth_url + '?client_id=' + appId + '&state=' + state
 
 	return {
 		state: state,
@@ -128,8 +146,28 @@ exports.generateURL = function(meta, appID) {
 	}
 }
 
+/* allow users to provide the meta post however they want */
+function normalizeMataPost(meta) {
+	if(meta.post) meta = meta.post
+	if(meta.content) meta = meta.content
+	// Check at least for servers and entity
+	if(!meta.servers || !meta.entity)
+		throw new Error('meta post needs at least a list of servers and an entity')
+
+	if(meta.servers.length > 1) {
+		// select server with lowest preference number
+		meta.servers = meta.servers.sort(function(a,b) {
+			if (a.preference < b.preference) return -1
+			else if (a.preference == b.preference) return 0
+			else return 1
+		})
+	}
+
+	return meta
+}
+
 /* last authentication step; 'trades' received code for a persitent token */
-exports.tradeCode = function(meta, creds, code, cb) {
+function tradeCode(meta, creds, code, cb) {
 	if(!meta) {
 		throw new Error('meta post required (the post.content part)')
 	}
@@ -140,6 +178,8 @@ exports.tradeCode = function(meta, creds, code, cb) {
 	if(!code)  {
 		throw new Error('code required (read the function name!)')
 	}
+
+	meta = normalizeMataPost(meta)
 
 	var url = meta.servers[0].urls.oauth_token
 
@@ -153,6 +193,9 @@ exports.tradeCode = function(meta, creds, code, cb) {
 		'Authorization': auth.field
 	}
 	u.method = 'POST'
+
+	// only relevant for browserified version
+	u.withCredentials = false
 
 	debug('trade code request', u)
 
