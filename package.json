@@ -18,19 +18,17 @@
   "version": "0.2.5",
   "main": "auth.js",
   "scripts": {
-    "test": "tap ./test"
+    "test": "tape ./test/integration.js"
   },
   "dependencies": {
     "tent-request": "~0.4.3",
     "concat-stream": "~1.4.1",
-    "hawk": "~2.1.0",
+    "hawk": "~2.1.2",
     "debug": "~0.7.4"
   },
   "devDependencies": {
-    "tap": "~0.4.8"
-  },
-  "browser": {
-    "hawk": "./node_modules/hawk/lib/browser.js"
+    "open": "0.0.4",
+    "tape": "~2.12.0"
   },
   "license": "MIT"
 }

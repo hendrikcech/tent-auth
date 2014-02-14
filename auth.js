@@ -36,6 +36,7 @@ function registerApp(meta, app, cb) {
 		if(err) return cb(err)
 
 		var links = res.headers.link
+
 		if(!links) {
 			err = 'flawed response: no credential link header (1)'
 			return cb(new Error(err))
@@ -70,10 +71,12 @@ function registerApp(meta, app, cb) {
 
 		// only relevant for browserified version
 		u.withCredentials = false
+		u.method = 'GET'
+		u.scheme = u.protocol.split(':')[0]
 
 		debug('request with', u)
 
-		var req = iface.get(u)
+		var req = iface.request(u)
 
 		var error = []
 		req.on('error', function(err) {
@@ -88,6 +91,8 @@ function registerApp(meta, app, cb) {
 
 			res.pipe(concat({ encoding: 'string' }, onCreds))
 		})
+
+		req.end()
 
 		function onCreds(body) {
 			if(err) error.push(err)

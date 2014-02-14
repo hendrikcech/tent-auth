@@ -1,0 +1,34 @@
+{
+    "post": {
+        "content": {
+            "entity": "https://trtest.cupcake.is",
+            "profile": {},
+            "servers": [
+                {
+                    "version": "0.3",
+                    "preference": 0,
+                    "urls": {
+                        "oauth_auth": "https://trtest.cupcake.is/tent/oauth",
+                        "oauth_token": "https://trtest.cupcake.is/tent/oauth/authorization",
+                        "posts_feed": "https://trtest.cupcake.is/tent/posts",
+                        "post": "https://trtest.cupcake.is/tent/posts/{entity}/{post}",
+                        "new_post": "https://trtest.cupcake.is/tent/posts",
+                        "post_attachment": "https://trtest.cupcake.is/tent/posts/{entity}/{post}/attachments/{name}",
+                        "attachment": "https://trtest.cupcake.is/tent/attachments/{entity}/{digest}",
+                        "batch": "https://trtest.cupcake.is/tent/batch",
+                        "server_info": "https://trtest.cupcake.is/tent/server",
+                        "discover": "https://trtest.cupcake.is/tent/discover"
+                    }
+                }
+            ]
+        },
+        "entity": "https://trtest.cupcake.is",
+        "id": "meta",
+        "published_at": 1390441025049,
+        "type": "https://tent.io/types/meta/v0#",
+        "version": {
+            "id": "sha512t256-daf071f8f9a79d4f5ab86bcc5fc6fa9f14c19fe153ac130e6c5936dc302c669a",
+            "published_at": 1390441025049
+        }
+    }
+}
