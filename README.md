@@ -30,7 +30,9 @@ When the server finally redirects the user to the specified redirect uri, this f
 Use the `tempCreds` obtained from `auth.registerApp()`.
 
 # test
-Tests are currently broken and are in need of a major rework.
+Tests can be run both in node and the browser.
+
+	npm test
 
 # license
 This software is released under the MIT license:
