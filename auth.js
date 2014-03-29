@@ -1,7 +1,6 @@
 var request = require('tent-request')
 var http = require('http')
 var https = require('https')
-var concat = require('concat-stream')
 var hawk = require('hawk')
 var urlMod = require('url')
 var debug = require('debug')('tent-auth')
@@ -89,7 +88,14 @@ function registerApp(meta, app, cb) {
 				error.push(err)
 			}
 
-			res.pipe(concat({ encoding: 'string' }, onCreds))
+			var data = ''
+			res.on('data', function(d) {
+				data += d
+			})
+
+			res.on('end', function() {
+				onCreds(data.toString('utf8'))
+			})
 		})
 
 		req.end()
@@ -217,7 +223,14 @@ function tradeCode(meta, creds, code, cb) {
 			error.push(err)
 		}
 
-		res.pipe(concat({ encoding: 'string' }, onCreds))
+		var data = ''
+		res.on('data', function(d) {
+			data += d
+		})
+
+		res.on('end', function() {
+			onCreds(data.toString('utf8'))
+		})
 	})
 
 	function onCreds(body) {
